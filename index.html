@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>김동운세 보러 오세요!</title>
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background-color: #f3f4f6;
+    min-height: 100vh;
+    padding: 32px 16px;
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    opacity: 0;
+    transform: translateY(25px);
+    animation: slideUp 0.7s ease-out forwards;
+}
+
+/* 🔥 메인 박스: 타로 박스와 동일한 폭 맞추기 */
+.container {
+    width: 100%;
+    max-width:1080px;
+    background:#ffffff;
+    padding: 40px 40px; /* 더 넓은 비율에 맞게 여백 조정 */
+    border-radius: 18px;
+    box-shadow:0 16px 30px rgba(15,23,42,0.1);
+    border:1px solid #e5e7eb;
+    margin-top: 20px;
+}
+
+
+        /* ---------- 탭 메뉴 ---------- */
+        .tabs {
+            display:flex;
+            gap:10px;
+            margin-bottom:20px;
+        }
+
+        .tab-btn {
+            flex:1;
+            padding:10px 0;
+            border:none;
+            cursor:pointer;
+            border-radius:10px;
+            background:#e5e7eb;
+            font-weight:600;
+            font-size:14px;
+        }
+
+        .tab-btn.active {
+            background:#2563eb;
+            color:white;
+
+        }
+
+        .tab-content {
+        display:none;
+        opacity: 0;
+        transform: translateY(25px);
+        animation: slideUp 0.7s ease-out forwards;}
+
+        .tab-content.active { display:block;
+        opacity: 0;
+        transform: translateY(25px);
+        animation: slideUp 0.7s ease-out forwards;}
+
+        /* 공통 폼 UI */
+        label {
+            display:block; font-size:13px; font-weight:500; margin-bottom:6px; color:#374151;
+        }
+        input[type="text"], input[type="date"] {
+            width:100%; padding:10px 12px; margin-bottom:16px;
+            border-radius:10px; background:#f9fafb;
+            border:1px solid #d1d5db;
+        }
+        .submit-btn {
+            width:100%; padding:12px;
+            border:none; border-radius:999px;
+            background: #ff9800;; color:white;
+            font-size:14px; font-weight:600; cursor:pointer;
+            margin-top:8px;
+        }
+        .submit-btn:hover { background:#1d4ed8; }
+
+        /* 타로 박스 */
+        .tarot-box {
+            background:white;
+            width : 100%;
+            max-width:1080px;
+            padding: 30px;
+            border-radius:15px;
+            box-shadow:0 8px 20px rgba(0,0,0,0.08);
+            text-align:center;
+            margin-top:10px;
+            opacity: 0;
+    transform: translateY(25px);
+    animation: slideUp 0.7s ease-out forwards;
+        }
+        /* 각 줄(row)를 수평 정렬 */
+        .tarot-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; /* 카드 간격 */
+    justify-content: center;
+    margin-top: 20px;
+    position: relative !important;
+}
+
+/* 카드 스타일 */
+.tarot-card {
+    width: 130px;
+    height: 210px;
+    background-image: url('/tarot/card-back.png');
+    background-size: cover;
+    background-position: center;
+    border-radius: 12px;
+    border: 3px solid transparent;
+    cursor: pointer;
+    outline: none;
+    position: relative;
+    background-color: transparent;
+
+    transition:
+        transform .15s ease,
+        border-color .2s ease;
+}
+
+.tarot-card:hover {
+    transform: scale(1.07);
+    border-color: #b38a50;
+}
+
+/* hover 시 Pick Me! 표시 */
+.tarot-card::after {
+    content: "Pick Me!";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity .2s ease;
+    text-shadow: 0px 0px 8px rgba(0,0,0,0.8);
+}
+
+.tarot-card:hover::after {
+    opacity: 1;
+}
+        /* 포춘쿠키 전체 박스 중앙 정렬 */
+.cookie-box {
+    display: flex;
+    flex-direction: column;   /* 세로 정렬 */
+    align-items: center;      /* 가운데 정렬 */
+    justify-content: center;
+    margin-top: 20px;
+    opacity: 0;
+    transform: translateY(25px);
+    animation: slideUp 0.7s ease-out forwards;
+}
+
+/* 쿠키 이미지 */
+.cookie-img {
+    width: 200px;
+    cursor: pointer;
+    transition: transform .2s;
+    margin-bottom: 12px;   /* 이미지 아래 여백 */
+}
+
+/* 버튼 중앙 정렬 */
+.cookie-btn, .cookie-again {
+    padding: 10px 16px;
+    border: none;
+    background: #ff9800;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.cookie-btn:hover, .cookie-again:hover {
+    background: #1d4ed8;
+}
+
+/* 결과 텍스트도 가운데 정렬 */
+#cookie-result {
+    text-align: center;
+    margin-top: 20px;
+}
+@keyframes shakeCookie {
+    0% { transform: rotate(0deg); }
+    20% { transform: rotate(-10deg); }
+    40% { transform: rotate(10deg); }
+    60% { transform: rotate(-8deg); }
+    80% { transform: rotate(8deg); }
+    100% { transform: rotate(0deg); }
+}
+
+/* 애니메이션 클래스 */
+.cookie-shake {
+    animation: shakeCookie 0.5s ease-in-out;
+}
+
+@keyframes slideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+        /* ⭐ 카드가 모이는 준비 단계 */
+.tarot-container.prepare .tarot-card {
+    position: absolute !important;
+    top: 50%;
+    left: 50%;
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(8deg);
+}
+
+/* ⭐ 카드가 펼쳐져서 현재 배열로 보이는 단계 */
+.tarot-container.spread .tarot-card {
+    position: static !important;
+    opacity: 1;
+    transform: rotate(0deg);
+    transition: all 0.9s ease;
+}
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ⭐ 탭 메뉴 -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="today" onclick="openTab('today')">오늘의 운세</button>
+        <button class="tab-btn" data-tab="tarot" onclick="openTab('tarot')">타로</button>
+        <button class="tab-btn" data-tab="ddiddi" onclick="openTab('ddiddi')">띠 운세</button>
+        <button class="tab-btn" data-tab="cookie" onclick="openTab('cookie')">포춘쿠키</button>
+
+    </div>
+
+    <!-- ⭐ 오늘의 운세 탭 -->
+    <div class="tab-content active" id="today">
+        <h1 style="font-size:24px; margin-bottom:10px; text-align : center;">🔮 오늘의 운세</h1>
+        <p style="font-size:14px; color:#444; margin-bottom:20px; text-align : center;">
+            생년월일을 입력하면 오늘의 운세를 확인할 수 있습니다.
+        </p>
+
+        <form action="/fortune" method="post" style="max-width:420px; margin:0 auto;">
+
+            <!-- 성별 -->
+            <label>성별</label>
+            <select name="gender" required
+                    style="width:100%; padding:12px; border-radius:10px; border:1px solid #d1d5db; background:#f9fafb; margin-bottom:15px;">
+                <option value="male">남성</option>
+                <option value="female">여성</option>
+            </select>
+
+            <!-- 이름 -->
+            <label>이름</label>
+            <input type="text" name="userName" placeholder="이름 입력" required>
+
+
+            <!-- 양력 / 음력 -->
+            <label>생년월일 종류</label>
+            <select name="calendarType" required
+                    style="width:100%; padding:12px; border-radius:10px; border:1px solid #d1d5db; background:#f9fafb; margin-bottom:15px;">
+                <option value="solar">양력</option>
+                <option value="lunar">음력</option>
+            </select>
+
+            <!-- 태어난 시간 -->
+            <label>태어난 시간</label>
+            <select name="bornTime" required
+                    style="width:100%; padding:12px; border-radius:10px; border:1px solid #d1d5db; background:#f9fafb; margin-bottom:15px;">
+                <option value="">모름</option>
+                <option value="子">子 (23~01)</option>
+                <option value="丑">丑 (01~03)</option>
+                <option value="寅">寅 (03~05)</option>
+                <option value="卯">卯 (05~07)</option>
+                <option value="辰">辰 (07~09)</option>
+                <option value="巳">巳 (09~11)</option>
+                <option value="午">午 (11~13)</option>
+                <option value="未">未 (13~15)</option>
+                <option value="申">申 (15~17)</option>
+                <option value="酉">酉 (17~19)</option>
+                <option value="戌">戌 (19~21)</option>
+                <option value="亥">亥 (21~23)</option>
+            </select>
+
+
+            <!-- 생년월일 -->
+            <label>생년월일</label>
+            <input type="date" id="birthDate" name="birthDate" required>
+
+            <!-- 제출 -->
+            <button type="submit" class="submit-btn">운세 확인하기</button>
+        </form>
+
+    </div>
+
+
+    <!-- ⭐ 타로 탭 (요청한 /tarot 화면 그대로 통합) -->
+    <div class="tab-content" id="tarot">
+        <div class="tarot-box">
+            <h1 style="font-size:24px; margin-bottom:10px;">🃏 타로 운세</h1>
+            <p style="font-size:14px; color:#444; margin-bottom:20px;">
+                마음을 비우고 카드를 눌러 오늘의 메시지를 받아보세요.
+            </p>
+
+            <!-- /tarot-result 로 POST 보내는 것 그대로 유지 -->
+            <form method="post" th:action="@{/tarot-go}">
+                <div class="tarot-container">
+                    <!-- 총 22장 버튼 -->
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                    <button class="tarot-card"></button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- ⭐ 띠 운세 탭 -->
+    <div class="tab-content" id="ddiddi">
+        <h1 style="font-size:24px; margin-bottom:10px; text-align:center; margin-bottom:12px;">🧧 띠 운세</h1>
+        <p style="text-align:center; color:#444; margin-bottom:20px;">
+            띠를 선택하면 오늘의 띠 운세를 알려드릴게요!
+        </p>
+
+        <form action="/ddiddi" method="post" style="max-width:400px; margin:0 auto;">
+            <label>당신의 띠를 선택해주세요</label>
+            <select name="ddiddi" style="
+            width:100%; padding:12px; border-radius:10px;
+            border:1px solid #d1d5db; background:#f9fafb;">
+                <option value="쥐띠">🐭 쥐띠</option>
+                <option value="소띠">🐮 소띠</option>
+                <option value="호랑이띠">🐯 호랑이띠</option>
+                <option value="토끼띠">🐰 토끼띠</option>
+                <option value="용띠">🐲 용띠</option>
+                <option value="뱀띠">🐍 뱀띠</option>
+                <option value="말띠">🐴 말띠</option>
+                <option value="양띠">🐑 양띠</option>
+                <option value="원숭이띠">🐵 원숭이띠</option>
+                <option value="닭띠">🐔 닭띠</option>
+                <option value="개띠">🐶 개띠</option>
+                <option value="돼지띠">🐷 돼지띠</option>
+            </select>
+
+            <button type="submit" class="submit-btn" style="margin-top:20px;">
+                띠 운세 확인하기
+            </button>
+        </form>
+    </div>
+
+
+    <div class="tab-content" id="cookie">
+        <h1 style="font-size:24px; margin-bottom:10px; text-align:center;">🥠 포춘쿠키</h1>
+        <p style="font-size:14px; color:#444; margin-bottom:20px; text-align:center;">
+            쿠키를 클릭해서 오늘의 짧은 메시지를 확인하세요.
+        </p>
+
+        <div class="cookie-box">
+            <!-- 🔥 이미지 클릭 가능 -->
+            <img id="cookie-image" src="/cookie/cookie.png" class="cookie-img" style="cursor:pointer;">
+        </div>
+        <br><br>
+        <h2 style="font-size:14px; color:#444; margin-bottom:20px; text-align:center;">과연 오늘의 메시지는?!</h2>
+
+        <div id="cookie-result" style="display:none; text-align:center; margin-top:20px;">
+            <h3 id="cookie-text" style="margin-bottom:15px;"></h3>
+
+            <!-- 🔥 다시 뽑기 버튼 -->
+            <button id="cookie-again" class="cookie-again">한번 더?!</button>
+        </div>
+    </div>
+
+
+</div>
+<script>
+
+    function openTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            document.querySelector('[data-tab="'+tab+'"]').classList.add('active');
+            document.getElementById(tab).classList.add('active');
+
+            if (tab === "tarot") {
+    animateTarotCards();
+}
+        }
+        document.getElementById("birthDate").addEventListener("input", function() {
+    let value = this.value;  // yyyy-mm-dd 형태
+    let parts = value.split("-");
+
+    // 연도는 4자리만 허용
+    if (parts[0] && parts[0].length > 4) {
+        parts[0] = parts[0].substring(0, 4);
+        this.value = parts.join("-");
+        }
+    });
+        document.addEventListener("DOMContentLoaded", () => {
+        document.body.classList.add("page-slide-up");
+    });
+
+    const cookieMessages = [
+        "행운이 곧 당신을 찾아옵니다.",
+        "오늘은 예상 못한 기회가 생길 수 있어요.",
+        "작은 선택이 큰 변화를 만듭니다.",
+        "당신의 진심은 전달될 것입니다.",
+        "새로운 만남이 곧 있을 거예요.",
+        "걱정은 살짝 뒤로 미뤄두세요.",
+        "오늘은 차분하게 행동하면 좋아요.",
+        "행운이 당신에게 미소짓고 있어요!",
+        "원했던 일이 곧 이루어집니다!",
+        "오늘은 당신의 날입니다!"
+    ];
+
+    let isOpened = false;  // 🔥 쿠키가 이미 열렸는지 상태 저장
+
+    function openCookie() {
+
+        if (isOpened) return;
+
+    isOpened = true;
+
+    const cookieImg = document.getElementById("cookie-image");
+
+    // 🔥 1) 흔들기 애니메이션 추가
+    cookieImg.classList.add("cookie-shake");
+
+    // 🔥 2) 애니메이션 끝난 뒤 클래스 자동 제거
+    setTimeout(() => {
+        cookieImg.classList.remove("cookie-shake");
+    }, 500);
+
+    // 메시지 랜덤 선택
+    const msg = cookieMessages[Math.floor(Math.random() * cookieMessages.length)];
+    cookieImg.src = "/cookie/cookie-open.png";
+
+    document.getElementById("cookie-text").textContent = msg;
+    document.getElementById("cookie-result").style.display = "block";
+    }
+
+    function resetCookie() {
+        isOpened = false; // 🔥 다시 쿠키 열 수 있게 초기화
+        document.getElementById("cookie-image").src = "/cookie/cookie.png";
+        document.getElementById("cookie-result").style.display = "none";
+    }
+
+    // 🔥 이미지 클릭 → 열기
+    document.getElementById("cookie-image").addEventListener("click", openCookie);
+    // 🔥 다시 뽑기 → 원상복구
+    document.getElementById("cookie-again").addEventListener("click", resetCookie);
+
+
+    // ⭐ 타로 카드 모였다가 정렬되는 애니메이션
+function animateTarotCards() {
+    const container = document.querySelector(".tarot-container");
+    if (!container) return;
+
+    container.classList.remove("prepare", "spread");
+
+    // ⭐ 강제 리플로우 (이게 있어야 '모이는' 장면이 보임!!)
+    void container.offsetWidth;
+
+    // 1단계: 카드 중앙 모이기
+    container.classList.add("prepare");
+
+    // 2단계: 펼치기 (1초 뒤)
+    setTimeout(() => {
+        container.classList.add("spread");
+    }, 900);
+}
+
+
+</script>
+
+</body>
+</html>
